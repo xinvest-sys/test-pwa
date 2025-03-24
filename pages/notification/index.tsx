@@ -31,9 +31,9 @@ import {
 
 
 /// https://www.totaltypescript.com/how-to-properly-type-window
-declare const window: {
-  workbox: any;
-} & Window;
+// declare const window: {
+//   workbox: any;
+// } & Window;
 
 
 const base64ToUint8Array = (base64: string | undefined) => {
@@ -52,6 +52,27 @@ const base64ToUint8Array = (base64: string | undefined) => {
     throw new Error('Invalid web push public key.');
   }
 }
+
+const notificationSupported = () => {
+  if (typeof window === "undefined") {
+    console.log("typeof window === undefined");
+    return false;
+  } else if (!("serviceWorker" in navigator)) {
+    console.log("!(serviceWorker in navigator)");
+    return false;
+  } else if (!("PushManager" in window)) {
+    console.log("!(PushManager in window)");
+    return false;
+  } else if (!("showNotification" in ServiceWorkerRegistration.prototype)) {
+    console.log("!('showNotification' in ServiceWorkerRegistration.prototype)");
+    return false;
+    // } else if (window.serwist === undefined) {
+    //   console.log("window.serwist === undefined");
+    //   return false;
+  } else {
+    return true;
+  }
+};
 
 const Messager = (props: {message: string}) => (
   <Alert 
@@ -95,47 +116,47 @@ const SubscribeOptions = (props: { checked: boolean, setChecked: (value: boolean
   />
 );
 
-const LogListing = (props: { elements: JSX.Element[], reload: () => Promise<any> }) => (
-  <Table 
-    mt={60}
-    striped 
-    withTableBorder 
-    stickyHeader 
-    stickyHeaderOffset={60} 
-  >
-    <Table.Thead>
-      <Table.Tr>
-        <Table.Th>Sent at</Table.Th>
-        <Table.Th>Title</Table.Th>
-        <Table.Th>Message</Table.Th>
-      </Table.Tr>
-    </Table.Thead>
-    <Table.Tbody>{props.elements}</Table.Tbody>
-    <Table.Caption>
-      <Link 
-        href='' 
-        prefetch={false}
-        onClick={() => props.reload()}
-        style={{ 
-          color: 'red', 
-          fontSize: '14px', 
-          fontWeight: 'bold' 
-        }}
-      >
-        Reload the logs
-      </Link>
-    </Table.Caption>
-  </Table>
-);
+// const LogListing = (props: { elements: JSX.Element[], reload: () => Promise<any> }) => (
+//   <Table 
+//     mt={60}
+//     striped 
+//     withTableBorder 
+//     stickyHeader 
+//     stickyHeaderOffset={60} 
+//   >
+//     <Table.Thead>
+//       <Table.Tr>
+//         <Table.Th>Sent at</Table.Th>
+//         <Table.Th>Title</Table.Th>
+//         <Table.Th>Message</Table.Th>
+//       </Table.Tr>
+//     </Table.Thead>
+//     <Table.Tbody>{props.elements}</Table.Tbody>
+//     <Table.Caption>
+//       <Link 
+//         href='' 
+//         prefetch={false}
+//         onClick={() => props.reload()}
+//         style={{ 
+//           color: 'red', 
+//           fontSize: '14px', 
+//           fontWeight: 'bold' 
+//         }}
+//       >
+//         Reload the logs
+//       </Link>
+//     </Table.Caption>
+//   </Table>
+// );
 
-const Index = () => {
+export default function NotificationMain() {
   const { data: sessionData } = useSession();
-  const userId = sessionData && sessionData.user ? sessionData.user.id : '';
-  const token = sessionData && sessionData.user ? sessionData.user.token : '';
+  const userId = sessionData && sessionData.user ? sessionData.user.id : "";
+  const token = sessionData && sessionData.user ? sessionData.user.token : "";
 
   console.table(sessionData);
-  if (userId === '') {
-    console.log('Invalid or empty user Id.');
+  if (userId === "") {
+    console.log(`notifications.tsx: Invalid or empty user Id.`);
   }
 
   const [checked, setChecked] = useState(true);
@@ -148,181 +169,195 @@ const Index = () => {
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
-  const { isLoading, isError, error: logsError, data: logsData, refetch } = useQuery( { 
-    queryKey: ['getLogs'], 
-    queryFn: () => getTestLogs(userId, token), 
-  });
+  // const { isLoading, isError, error: logsError, data: logsData, refetch } = useQuery( {
+  //   queryKey: ['getLogs'],
+  //   queryFn: () => getTestLogs(userId, token),
+  // });
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && window.workbox !== undefined) {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          if (sub && !(sub.expirationTime && Date.now() > sub.expirationTime - 5 * 60 * 1000)) {
+    // if (typeof window !== 'undefined' && 'serviceWorker' in navigator && window.workbox !== undefined) {
+    if (notificationSupported()) {
+      console.log("SW supported");
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          if (
+            sub &&
+            !(
+              sub.expirationTime &&
+              Date.now() > sub.expirationTime - 5 * 60 * 1000
+            )
+          ) {
             setSubscription(sub);
             setIsSubscribed(true);
           }
         });
         setRegistration(reg);
       });
+    } else {
+      alert("SW NOT Supported!!");
     }
   }, []);
 
-  const logs = useMemo(() => {
-    return !logsData 
-      ? [] 
-      : logsData.map(l => (
-          <Table.Tr key={l.id}>
-            <Table.Td fz='xs'>{dayjs(l.sentAt).format('YYYY-MM-DD HH:mm:ss')}</Table.Td>
-            <Table.Td fz='xs'>{l.title}</Table.Td>
-            <Table.Td fz='xs'>{l.message}</Table.Td>
-          </Table.Tr>
-        ));
-  }, [logsData]); 
-
+  // const logs = useMemo(() => {
+  //   return !logsData
+  //     ? []
+  //     : logsData.map(l => (
+  //         <Table.Tr key={l.id}>
+  //           <Table.Td fz='xs'>{dayjs(l.sentAt).format('YYYY-MM-DD HH:mm:ss')}</Table.Td>
+  //           <Table.Td fz='xs'>{l.title}</Table.Td>
+  //           <Table.Td fz='xs'>{l.message}</Table.Td>
+  //         </Table.Tr>
+  //       ));
+  // }, [logsData]);
 
   const handleSubscribe = async (event: any) => {
+    if (!process.env.NEXT_PUBLIC_WEBPUSH_PUBLIC_KEY) {
+      throw new Error("Environment variables supplied not sufficient.");
+    }
+    if (!registration) {
+      alert("No SW registration available.");
+      console.error("No SW registration available.");
+      return;
+    }
     event.preventDefault();
     setIsProcessSubscribe(true);
 
-    if (registration) {
+    // if (registration) {
       const subs = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: base64ToUint8Array(process.env.NEXT_PUBLIC_WEBPUSH_PUBLIC_KEY)
+        applicationServerKey: base64ToUint8Array(
+          process.env.NEXT_PUBLIC_WEBPUSH_PUBLIC_KEY
+        ),
       });
-      
+
       try {
         const response = await createSubscription(userId, subs, token);
         if (response.ok) {
           setSubscription(subs);
           setIsSubscribed(true);
           setError(null);
-          console.log('web push subscribed!');
+          console.log("web push subscribed!");
           console.log(subs);
         }
       } catch (err: any) {
         setError(err.message);
       }
-    }
+    // }
     setIsProcessSubscribe(false);
-  }
+  };
 
   const handleUnsubscribe = async (event: any) => {
+    if (!subscription) {
+      console.error("Web-push not subscribed");
+      return;
+    }
     event.preventDefault();
     setIsProcessUnsubscribe(true);
 
-    if (subscription) {
-      await subscription.unsubscribe();
-      const { endpoint } = subscription;
+    // if (subscription) {
+    await subscription.unsubscribe();
+    const { endpoint } = subscription;
 
-      try {
-        const response = await deleteSubscription(endpoint, token);
-        if (response.ok) {
-          setSubscription(null);
-          setIsSubscribed(false);
-          setError(null);
-          console.log('web push unsubscribed!');
-        }
-      } catch (err: any) {
-        setError(err.message);
+    try {
+      const response = await deleteSubscription(endpoint, token);
+      if (response.ok) {
+        setSubscription(null);
         setIsSubscribed(false);
+        setError(null);
+        console.log("web push unsubscribed!");
       }
+    } catch (err: any) {
+      setError(err.message);
+      setIsSubscribed(false);
     }
+    //  }
     setIsProcessUnsubscribe(false);
-  }
+  };
 
   const handleTest = async (event: any) => {
-    event.preventDefault();
-    setIsProcessTest(true);
-
-    if (subscription == null) {
-      console.error('web push not subscribed');
+    if (!subscription) {
+      alert("Web push not subcribed!!");
+      console.error("Web push not subscribed");
       return;
     }
+    event.preventDefault();
+    setIsProcessTest(true);
 
     try {
       const response = await test(userId, token);
       if (response.ok) {
         setError(null);
-        refetch();
+        // refetch();
       }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsProcessTest(false);
     }
-  }
+  };
 
-  if (isLoading) {
-    return <Loading />;
-  }
+  // if (isLoading) {
+  //   return <Loading />;
+  // }
 
-  if (isError) {
-    return  <Messager message={logsError.message} />
-  }
+  // if (isError) {
+  //   return  <Messager message={logsError.message} />
+  // }
 
   return (
     <Box>
       <Center>
         <Stack>
-          <Button 
-            w='350'
-            variant='outline' 
-            size='md' 
-            radius='lg'
+          <Button
+            w="350"
+            variant="outline"
+            size="md"
+            radius="lg"
             loading={isProcessSubscribe}
             disabled={isSubscribed}
-            onClick={handleSubscribe} 
+            onClick={handleSubscribe}
           >
             Subscribe
           </Button>
-          <Button 
-            w='350'
-            variant='outline' 
-            size='md' 
-            radius='lg'
+          <Button
+            w="350"
+            variant="outline"
+            size="md"
+            radius="lg"
             loading={isProcessUnsubscribe}
             disabled={!isSubscribed}
-            onClick={handleUnsubscribe} 
+            onClick={handleUnsubscribe}
           >
             Unsubscribe
           </Button>
-          <Button 
-            w='350'
-            variant='outline' 
-            size='md' 
-            color='red'
-            radius='lg'
+          <Button
+            w="350"
+            variant="outline"
+            size="md"
+            color="red"
+            radius="lg"
             loading={isProcessTest}
             hidden={!isSubscribed}
-            onClick={handleTest} 
+            onClick={handleTest}
           >
             Test
           </Button>
+          {isSubscribed ? (
+            <Paper w="350" shadow="sm" radius="md" withBorder p="xl">
+              <Text mb="md" size="sm">
+                You will reveive the following notifications:
+              </Text>
+              <SubscribeOptions checked={checked} setChecked={setChecked} />
+            </Paper>
+          ) : null}
+          {error ? <Messager message={error} /> : null}
           {
-            isSubscribed ? (
-              <Paper w='350' shadow='sm' radius='md' withBorder p='xl'>
-                <Text mb='md' size='sm'>You will reveive the following notifications:</Text>
-                <SubscribeOptions 
-                  checked={checked} 
-                  setChecked={setChecked} 
-                />
-              </Paper>
-            ) : null
-          }
-          {
-            error ? (
-              <Messager message={error} />
-            ) : null
-          }
-          {
-            isSubscribed ? (
-              <LogListing elements={logs} reload={refetch} />
-            ) : null
+            // isSubscribed ? (
+            //   <LogListing elements={logs} reload={refetch} />
+            // ) : null
           }
         </Stack>
       </Center>
     </Box>
-	);
+  );
 }
-
-export default Index;
