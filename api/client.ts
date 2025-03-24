@@ -1,4 +1,4 @@
-import { Fetch } from '../utils/fetch2';
+import { Fetch } from '../utils/fetch';
 import {
   TClientAccount,
   TClientAccountCreate,
@@ -8,7 +8,7 @@ import {
 } from 'types';
 
 export async function getClientProfile(userId: string, token: string) {
-  const slug = `api/clients/${userId}/profile`;
+  const slug = `api/client/${userId}/profile`;
   const url =  `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   const data = await new Fetch<TClientProfile>()
     .setUrl(url)
@@ -22,7 +22,7 @@ export async function createClientProfile(profile: TClientProfile, token: string
     throw new Error('Profile cannot be null.');
   }
   /// send empty uuid (userid) for new creation
-  const slug = `api/clients/00000000-0000-0000-0000-000000000000/profile`;
+  const slug = `api/client/00000000-0000-0000-0000-000000000000/profile`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   return await new Fetch<TClientProfile>()
     .setUrl(url)
@@ -36,7 +36,7 @@ export async function updateClientProfile(profile: TClientProfile, token: string
     throw new Error('Profile is required.');
   }
   
-  const slug = `api/clients/${profile.id}/profile`;
+  const slug = `api/client/${profile.id}/profile`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   return await new Fetch<TClientProfile>()
     .setUrl(url)
@@ -46,7 +46,7 @@ export async function updateClientProfile(profile: TClientProfile, token: string
 }
 
 export async function getClientAccounts(userId: string, token: string): Promise<TClientAccount[]> {
-  const slug = `api/clients/${userId}/accounts`;
+  const slug = `api/client/${userId}/accounts`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   const data = await new Fetch<TClientAccount[]>()
     .setUrl(url)
@@ -59,7 +59,7 @@ export async function createClientAccount(userId: string, newAccount: TClientAcc
   if (!newAccount) {
     throw new Error('Profile is required.');
   }
-  const slug = `api/clients/${userId}/accounts`;
+  const slug = `api/client/${userId}/accounts`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   return await new Fetch<TClientAccountCreate>()
     .setUrl(url)
@@ -69,7 +69,7 @@ export async function createClientAccount(userId: string, newAccount: TClientAcc
 }
 
 export async function deleteClientAccount(accountId: string, token: string) {
-  const slug = `api/clients/accounts/${accountId}`;
+  const slug = `api/client/accounts/${accountId}`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   return await new Fetch()
     .setUrl(url)
@@ -78,7 +78,7 @@ export async function deleteClientAccount(accountId: string, token: string) {
 }
 
 export async function verifyPin(pin: TVerifyPin, token: string) {
-  const slug = `api/clients/verify-pin`;
+  const slug = `api/client/verify-pin`;
   const url =  `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   return await new Fetch<TVerifyPin>()
     .setUrl(url)
@@ -89,7 +89,7 @@ export async function verifyPin(pin: TVerifyPin, token: string) {
 
 export async function getStreamingInfo(userId: string, token: string) {
 
-  const slug = `api/clients/${userId}/streaming-info`;
+  const slug = `api/client/${userId}/streaming-info`;
   const url = `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/${slug}`;
   const data = await new Fetch<TStreamingCredential>()
     .setUrl(url)

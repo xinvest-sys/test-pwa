@@ -1,4 +1,4 @@
-import { Fetch } from '@/utils/fetch2';
+import { Fetch } from '@/utils/fetch';
 import { TDiagramUrl, TForecastData } from '@/types/index';
 
 export async function getHsiDiagramUrls(token: string) {

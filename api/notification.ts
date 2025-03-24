@@ -1,4 +1,4 @@
-import { Fetch } from '@/utils/fetch2';
+import { Fetch } from '@/utils/fetch';
 import { TNotificationLog, TNotificationLogInfo } from '../types';
 
 export async function createSubscription(userId: string, sub: PushSubscription, token: string) {
